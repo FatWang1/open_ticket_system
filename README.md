@@ -1,7 +1,7 @@
-[![GoDoc](https://pkg.go.dev/badge/github.com/FatWang1/open-ticket-system?utm_source=godoc)](https://pkg.go.dev/github.com/FatWang1/open-ticket-system)
-[![Go Report Card](https://goreportcard.com/badge/github.com/FatWang1/open-ticket-system)](https://goreportcard.com/report/github.com/FatWang1/open-ticket-system)
-[![codecov](https://codecov.io/github/FatWang1/open-ticket-system/branch/master/graph/badge.svg?token=2XWEF1Z3ZI)](https://codecov.io/github/FatWang1/open-ticket-system)
-![GitHub License](https://img.shields.io/github/license/FatWang1/open-ticket-system)
+[![GoDoc](https://pkg.go.dev/badge/github.com/FatWang1/open_ticket_system?utm_source=godoc)](https://pkg.go.dev/github.com/FatWang1/open_ticket_system)
+[![Go Report Card](https://goreportcard.com/badge/github.com/FatWang1/open_ticket_system)](https://goreportcard.com/report/github.com/FatWang1/open_ticket_system)
+[![codecov](https://codecov.io/github/FatWang1/open_ticket_system/branch/master/graph/badge.svg?token=2XWEF1Z3ZI)](https://codecov.io/github/FatWang1/open_ticket_system)
+![GitHub License](https://img.shields.io/github/license/FatWang1/open_ticket_system)
 
 # Open Ticket System
 
