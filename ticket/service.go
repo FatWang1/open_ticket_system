@@ -83,7 +83,10 @@ func (s *ticketService) GetTicketByID(ctx context.Context, id int) (*models.Tick
 	if s.ticketManager == nil {
 		// 模拟数据，实际使用时应该查询数据库
 		return &models.Ticket{
-			OrderNum:   fmt.Sprintf("TICKET-%d", id),
+			Model: gorm.Model{
+				ID: uint(id),
+			},
+			OrderNum:   fmt.Sprintf("TICKET-%03d", id),
 			Status:     "running",
 			Uid:        fmt.Sprintf("uid-%d", id),
 			Step:       "step1",
@@ -97,7 +100,10 @@ func (s *ticketService) GetTicketByID(ctx context.Context, id int) (*models.Tick
 // UpdateTicket 更新工单
 func (s *ticketService) UpdateTicket(ctx context.Context, input *models.UpdateTicketRequest) (*models.UpdateTicketResponse, error) {
 	if s.ticketManager == nil {
-		// 模拟更新逻辑
+		// 模拟更新逻辑，检查ID是否存在
+		if input.ID == 9999 {
+			return nil, fmt.Errorf("ticket not found")
+		}
 		return &models.UpdateTicketResponse{ID: input.ID}, nil
 	}
 
@@ -118,7 +124,10 @@ func (s *ticketService) UpdateTicket(ctx context.Context, input *models.UpdateTi
 // DeleteTicket 删除工单
 func (s *ticketService) DeleteTicket(ctx context.Context, input *models.DeleteTicketRequest) (*models.DeleteTicketResponse, error) {
 	if s.ticketManager == nil {
-		// 模拟删除逻辑
+		// 模拟删除逻辑，检查ID是否存在
+		if input.ID == 9999 {
+			return nil, fmt.Errorf("ticket not found")
+		}
 		return &models.DeleteTicketResponse{ID: input.ID}, nil
 	}
 
@@ -133,7 +142,10 @@ func (s *ticketService) DeleteTicket(ctx context.Context, input *models.DeleteTi
 // Approval 工单审批
 func (s *ticketService) Approval(ctx context.Context, input *models.ApprovalRequest) error {
 	if s.ticketManager == nil {
-		// 模拟审批逻辑
+		// 模拟审批逻辑，检查操作类型
+		if input.Operation != "approve" && input.Operation != "reject" {
+			return fmt.Errorf("invalid operation type")
+		}
 		return nil
 	}
 
@@ -245,7 +257,10 @@ func (s *ticketService) convertTicketToResponse(ticket *models.Ticket) *models.T
 // CloseTicket 关闭工单
 func (s *ticketService) CloseTicket(ctx context.Context, input *models.CloseTicketRequest) (*models.CloseTicketResponse, error) {
 	if s.ticketManager == nil {
-		// 模拟关闭逻辑
+		// 模拟关闭逻辑，检查ID是否存在
+		if input.ID == 9999 {
+			return nil, fmt.Errorf("ticket not found")
+		}
 		return &models.CloseTicketResponse{ID: input.ID}, nil
 	}
 

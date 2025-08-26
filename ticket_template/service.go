@@ -47,7 +47,10 @@ func NewTicketTemplateService(db *gorm.DB) TicketTemplateService {
 // CreateTicketTemplate 创建工单模板
 func (s *ticketTemplateService) CreateTicketTemplate(ctx context.Context, input *models.CreateTicketTemplateRequest) (*models.CreateTicketTemplateResponse, error) {
 	if s.templateManager == nil {
-		// 模拟创建逻辑
+		// 模拟创建逻辑，验证必填字段
+		if input.Name == "" || input.Creator == "" || input.StartStep == "" {
+			return nil, fmt.Errorf("missing required fields")
+		}
 		return &models.CreateTicketTemplateResponse{ID: 1}, nil
 	}
 
@@ -73,6 +76,13 @@ func (s *ticketTemplateService) GetTicketTemplateByID(ctx context.Context, id in
 	if s.templateManager == nil {
 		// 模拟数据，实际使用时应该查询数据库
 		return &models.TicketTemplate{
+			Model: gorm.Model{
+				ID: uint(id),
+			},
+			Name:      fmt.Sprintf("测试模板%d", id),
+			Memo:      fmt.Sprintf("测试模板%d的备注", id),
+			Version:   "1.0",
+			Creator:   "测试用户",
 			Uid:       fmt.Sprintf("template-%d", id),
 			StartStep: "step1",
 			Builtin:   false,
@@ -85,7 +95,14 @@ func (s *ticketTemplateService) GetTicketTemplateByID(ctx context.Context, id in
 // UpdateTicketTemplate 更新工单模板
 func (s *ticketTemplateService) UpdateTicketTemplate(ctx context.Context, input *models.UpdateTicketTemplateRequest) (*models.UpdateTicketTemplateResponse, error) {
 	if s.templateManager == nil {
-		// 模拟更新逻辑
+		// 模拟更新逻辑，检查ID是否存在
+		if input.ID == 9999 {
+			return nil, fmt.Errorf("template not found")
+		}
+		// 模拟内置模板不允许修改
+		if input.ID == 1 {
+			return nil, fmt.Errorf("cannot modify builtin template")
+		}
 		return &models.UpdateTicketTemplateResponse{ID: input.ID}, nil
 	}
 
@@ -112,7 +129,14 @@ func (s *ticketTemplateService) UpdateTicketTemplate(ctx context.Context, input 
 // DeleteTicketTemplate 删除工单模板
 func (s *ticketTemplateService) DeleteTicketTemplate(ctx context.Context, input *models.DeleteTicketTemplateRequest) (*models.DeleteTicketTemplateResponse, error) {
 	if s.templateManager == nil {
-		// 模拟删除逻辑
+		// 模拟删除逻辑，检查ID是否存在
+		if input.ID == 9999 {
+			return nil, fmt.Errorf("template not found")
+		}
+		// 模拟内置模板不允许删除
+		if input.ID == 1 {
+			return nil, fmt.Errorf("cannot delete builtin template")
+		}
 		return &models.DeleteTicketTemplateResponse{ID: input.ID}, nil
 	}
 

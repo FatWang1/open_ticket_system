@@ -53,13 +53,16 @@ func NewMySQLClient(config *MySQLConfig) (*MySQLClient, error) {
 		log.Printf("Database connection attempt %d failed: %v", i+1, err)
 	}
 
+	// 即使连接失败，也返回客户端结构，但标记为未连接
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect to MySQL after %d attempts: %w", config.MaxRetries+1, err)
+		log.Printf("MySQL client created but connection failed: %v", err)
+		return client, fmt.Errorf("failed to connect to MySQL after %d attempts: %w", config.MaxRetries+1, err)
 	}
 
 	// 自动迁移表结构
 	if err := client.AutoMigrate(); err != nil {
-		return nil, fmt.Errorf("failed to auto migrate: %w", err)
+		log.Printf("MySQL client connected but migration failed: %v", err)
+		return client, fmt.Errorf("failed to auto migrate: %w", err)
 	}
 
 	log.Println("MySQL client initialized successfully")
