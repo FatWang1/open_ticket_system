@@ -1,0 +1,208 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: open-ticket-system
+  namespace: default
+  labels:
+    app: open-ticket-system
+    version: v1.0.0
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: open-ticket-system
+  template:
+    metadata:
+      labels:
+        app: open-ticket-system
+        version: v1.0.0
+    spec:
+      containers:
+      - name: open-ticket-system
+        image: open-ticket-system:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8080
+          name: http
+          protocol: TCP
+        env:
+        - name: GIN_MODE
+          value: "release"
+        - name: TZ
+          value: "Asia/Shanghai"
+        env:
+        - name: MYSQL_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: open-ticket-system-config
+              key: mysql_host
+        - name: MYSQL_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: open-ticket-system-config
+              key: mysql_port
+        - name: MYSQL_USERNAME
+          valueFrom:
+            configMapKeyRef:
+              name: open-ticket-system-config
+              key: mysql_username
+        - name: MYSQL_DATABASE
+          valueFrom:
+            configMapKeyRef:
+              name: open-ticket-system-config
+              key: mysql_database
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: open-ticket-system-secrets
+              key: mysql-password
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: open-ticket-system-secrets
+              key: jwt-secret
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        volumeMounts:
+        - name: logs
+          mountPath: /app/logs
+        - name: config
+          mountPath: /app/conf
+      volumes:
+      - name: logs
+        emptyDir: {}
+      - name: config
+        configMap:
+          name: open-ticket-system-config
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: open-ticket-system-service
+  namespace: default
+  labels:
+    app: open-ticket-system
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 8080
+    protocol: TCP
+    name: http
+  selector:
+    app: open-ticket-system
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: open-ticket-system-config
+  namespace: default
+  labels:
+    app: open-ticket-system
+data:
+  mysql_host: "localhost"
+  mysql_port: "3306"
+  mysql_username: "root"
+  mysql_database: "open_ticket_system"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: open-ticket-system-secrets
+  namespace: default
+  labels:
+    app: open-ticket-system
+type: Opaque
+data:
+  # 注意：这些是base64编码的值，生产环境请使用真实的密钥
+  mysql-password: cGFzc3dvcmQ=  # password
+  jwt-secret: cHJvZHVjdGlvbi1zZWNyZXQ=  # production-secret
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: open-ticket-system-ingress
+  namespace: default
+  labels:
+    app: open-ticket-system
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: open-ticket-system.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: open-ticket-system-service
+            port:
+              number: 80
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: open-ticket-system-hpa
+  namespace: default
+  labels:
+    app: open-ticket-system
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: open-ticket-system
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 15
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 10
+        periodSeconds: 60
