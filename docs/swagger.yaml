@@ -1,0 +1,824 @@
+basePath: /api/v1
+definitions:
+  models.ApprovalRequest:
+    description: 工单审批请求结构
+    properties:
+      approval_user:
+        description: 审批人
+        example: 李四
+        maxLength: 50
+        minLength: 1
+        type: string
+      id:
+        description: 工单ID
+        example: 1
+        type: integer
+      memo:
+        description: 审批备注
+        example: 同意
+        maxLength: 1000
+        type: string
+      next_step:
+        description: 下一步骤
+        example: step2
+        maxLength: 100
+        minLength: 1
+        type: string
+      operation:
+        description: 审批操作
+        enum:
+        - approve
+        - reject
+        example: approve
+        type: string
+    required:
+    - approval_user
+    - id
+    - next_step
+    - operation
+    type: object
+  models.CloseTicketRequest:
+    properties:
+      id:
+        type: integer
+      memo:
+        maxLength: 1000
+        type: string
+      operator:
+        maxLength: 50
+        minLength: 1
+        type: string
+    required:
+    - id
+    - operator
+    type: object
+  models.CloseTicketResponse:
+    properties:
+      id:
+        type: integer
+    type: object
+  models.CreateTicketRequest:
+    description: 创建工单请求结构
+    properties:
+      creator:
+        description: 创建者
+        example: 张三
+        maxLength: 50
+        minLength: 1
+        type: string
+      memo:
+        description: 工单备注
+        example: 需要请假3天
+        maxLength: 1000
+        type: string
+      name:
+        description: 工单名称
+        example: 请假申请
+        maxLength: 100
+        minLength: 1
+        type: string
+      template_id:
+        description: 模板ID
+        example: 1
+        type: integer
+    required:
+    - creator
+    - name
+    - template_id
+    type: object
+  models.CreateTicketResponse:
+    description: 创建工单响应结构
+    properties:
+      id:
+        description: 工单ID
+        example: 1
+        type: integer
+    type: object
+  models.CreateTicketTemplateRequest:
+    type: object
+  models.CreateTicketTemplateResponse:
+    properties:
+      id:
+        type: integer
+    type: object
+  models.DeleteTicketResponse:
+    properties:
+      id:
+        type: integer
+    type: object
+  models.DeleteTicketTemplateResponse:
+    properties:
+      id:
+        type: integer
+    type: object
+  models.ListTicketResponse:
+    description: 查询工单列表响应结构
+    properties:
+      list:
+        description: 工单列表
+        items:
+          $ref: '#/definitions/models.TicketResponse'
+        type: array
+      total:
+        description: 总记录数
+        example: 100
+        type: integer
+    type: object
+  models.ListTicketTemplateResponse:
+    description: 查询工单模板列表响应结构
+    properties:
+      list:
+        description: 模板列表
+        items:
+          $ref: '#/definitions/models.TicketTemplateResponse'
+        type: array
+      total:
+        description: 总记录数
+        example: 50
+        type: integer
+    type: object
+  models.NextStepResponse:
+    description: 下一步骤响应结构
+    properties:
+      id:
+        description: 步骤ID
+        example: 1
+        type: integer
+      operation:
+        description: 操作类型
+        example: approve
+        type: string
+      to_step:
+        description: 目标步骤
+        example: review
+        type: string
+    type: object
+  models.StepConfig:
+    type: object
+  models.StepConfigResponse:
+    description: 步骤配置响应结构
+    properties:
+      id:
+        description: 配置ID
+        example: 1
+        type: integer
+      joint_sign_rate:
+        description: 联合签名比例
+        example: 0.5
+        type: number
+      next_steps:
+        description: 下一步骤列表
+        items:
+          $ref: '#/definitions/models.NextStepResponse'
+        type: array
+      operators:
+        description: 操作人列表
+        example:
+        - 张三
+        - 李四
+        items:
+          type: string
+        type: array
+      sign_type:
+        description: 签名类型
+        example: serial_sign
+        type: string
+      state:
+        description: 步骤状态
+        example: pending
+        type: string
+      step:
+        description: 步骤名
+        example: submit
+        type: string
+    type: object
+  models.TicketResponse:
+    description: 工单响应结构
+    properties:
+      created_at:
+        description: 创建时间
+        example: "2025-01-27T14:30:00Z"
+        type: string
+      id:
+        description: 工单ID
+        example: 1
+        type: integer
+      memo:
+        description: 工单备注
+        example: 需要请假3天
+        type: string
+      operated_users:
+        description: 已操作用户列表
+        example:
+        - 王五
+        items:
+          type: string
+        type: array
+      operators:
+        description: 操作人列表
+        example:
+        - 张三
+        - 李四
+        items:
+          type: string
+        type: array
+      order_num:
+        description: 工单号
+        example: TICKET-20250127143000
+        type: string
+      status:
+        description: 工单状态
+        example: running
+        type: string
+      step:
+        description: 当前步骤
+        example: submit
+        type: string
+      template_id:
+        description: 模板ID
+        example: 1
+        type: integer
+      uid:
+        description: 工单唯一标识
+        example: uid-1234567890
+        type: string
+      updated_at:
+        description: 更新时间
+        example: "2025-01-27T14:30:00Z"
+        type: string
+    type: object
+  models.TicketTemplateResponse:
+    description: 工单模板响应结构
+    properties:
+      builtin:
+        description: 是否内置
+        example: false
+        type: boolean
+      created_at:
+        description: 创建时间
+        example: "2025-01-27T14:30:00Z"
+        type: string
+      creator:
+        description: 创建者
+        example: 管理员
+        type: string
+      end_steps:
+        description: 结束步骤列表
+        example:
+        - approve
+        - reject
+        items:
+          type: string
+        type: array
+      id:
+        description: 模板ID
+        example: 1
+        type: integer
+      memo:
+        description: 模板备注
+        example: 请假申请流程
+        type: string
+      name:
+        description: 模板名称
+        example: 请假申请模板
+        type: string
+      start_step:
+        description: 起始步骤
+        example: submit
+        type: string
+      step_configs:
+        description: 步骤配置列表
+        items:
+          $ref: '#/definitions/models.StepConfigResponse'
+        type: array
+      uid:
+        description: 模板唯一标识
+        example: template-123
+        type: string
+      updated_at:
+        description: 更新时间
+        example: "2025-01-27T14:30:00Z"
+        type: string
+      version:
+        description: 版本号
+        example: "1.0"
+        type: string
+    type: object
+  models.UpdateTicketRequest:
+    properties:
+      id:
+        type: integer
+      memo:
+        maxLength: 1000
+        type: string
+    required:
+    - id
+    type: object
+  models.UpdateTicketResponse:
+    properties:
+      id:
+        type: integer
+    type: object
+  models.UpdateTicketTemplateRequest:
+    properties:
+      config:
+        items:
+          $ref: '#/definitions/models.StepConfig'
+        minItems: 1
+        type: array
+      creator:
+        maxLength: 50
+        minLength: 1
+        type: string
+      end_step:
+        items:
+          type: string
+        minItems: 1
+        type: array
+      id:
+        type: integer
+      memo:
+        maxLength: 1000
+        type: string
+      name:
+        maxLength: 100
+        minLength: 1
+        type: string
+      start_step:
+        maxLength: 100
+        minLength: 1
+        type: string
+    required:
+    - id
+    type: object
+  models.UpdateTicketTemplateResponse:
+    properties:
+      id:
+        type: integer
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: 这是一个完整的工单管理系统API，支持工单创建、审批、模板管理等功能。
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Open Ticket System API
+  version: "1.0"
+paths:
+  /ticket-templates:
+    get:
+      consumes:
+      - application/json
+      description: 分页查询工单模板列表，支持筛选和排序
+      parameters:
+      - default: 1
+        description: 页码
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: 每页数量
+        in: query
+        name: size
+        type: integer
+      - description: 模板名称
+        in: query
+        name: name
+        type: string
+      - description: 创建者
+        in: query
+        name: creator
+        type: string
+      - description: 版本号
+        in: query
+        name: version
+        type: string
+      - description: 是否内置
+        in: query
+        name: builtin
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ListTicketTemplateResponse'
+        "400":
+          description: 请求参数错误
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: 服务器内部错误
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 查询工单模板列表
+      tags:
+      - ticket-templates
+    post:
+      consumes:
+      - application/json
+      description: 创建新的工单模板
+      parameters:
+      - description: 创建模板请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateTicketTemplateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.CreateTicketTemplateResponse'
+        "400":
+          description: 请求参数错误
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: 服务器内部错误
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 创建工单模板
+      tags:
+      - ticket-templates
+  /ticket-templates/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 根据ID删除工单模板
+      parameters:
+      - description: 模板ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.DeleteTicketTemplateResponse'
+        "400":
+          description: 请求参数错误
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: 服务器内部错误
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 删除工单模板
+      tags:
+      - ticket-templates
+    get:
+      consumes:
+      - application/json
+      description: 根据ID获取工单模板详细信息
+      parameters:
+      - description: 模板ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.TicketTemplateResponse'
+        "400":
+          description: 请求参数错误
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: 模板不存在
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 获取工单模板详情
+      tags:
+      - ticket-templates
+    put:
+      consumes:
+      - application/json
+      description: 更新工单模板信息
+      parameters:
+      - description: 模板ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 更新模板请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpdateTicketTemplateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.UpdateTicketTemplateResponse'
+        "400":
+          description: 请求参数错误
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: 模板不存在
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: 服务器内部错误
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 更新工单模板
+      tags:
+      - ticket-templates
+  /tickets:
+    get:
+      consumes:
+      - application/json
+      description: 分页查询工单列表，支持筛选和排序
+      parameters:
+      - default: 1
+        description: 页码
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: 每页数量
+        in: query
+        name: size
+        type: integer
+      - description: 工单名称
+        in: query
+        name: name
+        type: string
+      - description: 创建者
+        in: query
+        name: creator
+        type: string
+      - description: 工单状态
+        in: query
+        name: status
+        type: string
+      - description: 模板ID
+        in: query
+        name: template_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ListTicketResponse'
+        "400":
+          description: 请求参数错误
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: 服务器内部错误
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 查询工单列表
+      tags:
+      - tickets
+    post:
+      consumes:
+      - application/json
+      description: 根据模板创建新的工单
+      parameters:
+      - description: 创建工单请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateTicketRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.CreateTicketResponse'
+        "400":
+          description: 请求参数错误
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: 服务器内部错误
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 创建工单
+      tags:
+      - tickets
+  /tickets/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 根据ID删除工单
+      parameters:
+      - description: 工单ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.DeleteTicketResponse'
+        "400":
+          description: 请求参数错误
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: 服务器内部错误
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 删除工单
+      tags:
+      - tickets
+    get:
+      consumes:
+      - application/json
+      description: 根据工单ID获取工单详细信息
+      parameters:
+      - description: 工单ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.TicketResponse'
+        "400":
+          description: 请求参数错误
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: 工单不存在
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 获取工单详情
+      tags:
+      - tickets
+    put:
+      consumes:
+      - application/json
+      description: 更新工单信息
+      parameters:
+      - description: 工单ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 更新工单请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpdateTicketRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.UpdateTicketResponse'
+        "400":
+          description: 请求参数错误
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: 工单不存在
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: 服务器内部错误
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 更新工单
+      tags:
+      - tickets
+  /tickets/{id}/approval:
+    post:
+      consumes:
+      - application/json
+      description: 审批工单，支持通过、拒绝等操作
+      parameters:
+      - description: 工单ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 审批请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.ApprovalRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 审批成功
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: 服务器内部错误
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 工单审批
+      tags:
+      - tickets
+  /tickets/{id}/close:
+    post:
+      consumes:
+      - application/json
+      description: 关闭工单
+      parameters:
+      - description: 工单ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 关闭工单请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.CloseTicketRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.CloseTicketResponse'
+        "400":
+          description: 请求参数错误
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: 服务器内部错误
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 关闭工单
+      tags:
+      - tickets
+securityDefinitions:
+  ApiKeyAuth:
+    description: 请输入JWT token，格式：Bearer {token}
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

@@ -1,0 +1,51 @@
+# Git相关
+.git
+.gitignore
+.gitattributes
+
+# 开发环境文件
+.env
+.env.local
+.env.*.local
+
+# 日志文件
+*.log
+logs/
+
+# 临时文件
+tmp/
+temp/
+*.tmp
+
+# IDE配置
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 操作系统文件
+.DS_Store
+Thumbs.db
+
+# 测试文件
+*_test.go
+test/
+tests/
+
+# 文档文件
+*.md
+docs/
+
+# 部署配置
+.deploy/
+
+# 构建产物
+bin/
+dist/
+build/
+
+# 依赖目录
+vendor/
+
+# 配置文件（开发环境）
+cmd/open_ticket_system/conf/config.dev.yaml
