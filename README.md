@@ -1,3 +1,8 @@
+[![GoDoc](https://pkg.go.dev/badge/github.com/FatWang1/open-ticket-system?utm_source=godoc)](https://pkg.go.dev/github.com/FatWang1/open-ticket-system)
+[![Go Report Card](https://goreportcard.com/badge/github.com/FatWang1/open-ticket-system)](https://goreportcard.com/report/github.com/FatWang1/open-ticket-system)
+[![codecov](https://codecov.io/github/FatWang1/open-ticket-system/branch/master/graph/badge.svg?token=2XWEF1Z3ZI)](https://codecov.io/github/FatWang1/open-ticket-system)
+![GitHub License](https://img.shields.io/github/license/FatWang1/open-ticket-system)
+
 # Open Ticket System
 
 一个基于Go语言的企业级工单审批系统，支持多种审批模式（串行、并行、联合审批）。
