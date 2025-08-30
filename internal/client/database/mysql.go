@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/FatWang1/open_ticket_system/internal/models"
+	"github.com/FatWang1/open_ticket_system/internal/utils"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -33,8 +34,12 @@ type MySQLClient struct {
 	config *MySQLConfig
 }
 
-// NewMySQLClient 创建MySQL客户端
+// NewMySQLClient 创建新的MySQL客户端
 func NewMySQLClient(config *MySQLConfig) (*MySQLClient, error) {
+	appLogger := utils.GetLogger()
+
+	appLogger.Printf("[INFO] Initializing MySQL client - host: %s, port: %d, database: %s", config.Host, config.Port, config.Database)
+
 	client := &MySQLClient{config: config}
 
 	// 尝试连接数据库，支持重试
@@ -172,7 +177,7 @@ func (c *MySQLClient) AutoMigrate() error {
 		&models.TicketOperatedUser{},
 		&models.TicketTemplate{},
 		&models.TemplateEndStep{},
-		&models.StepConfig{},
+		&models.StepConfigDB{},
 		&models.StepOperator{},
 		&models.NextStep{},
 	)

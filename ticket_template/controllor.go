@@ -4,192 +4,214 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/FatWang1/open_ticket_system/internal/manager"
 	"github.com/FatWang1/open_ticket_system/internal/models"
+	"github.com/FatWang1/open_ticket_system/internal/utils"
 	"github.com/FatWang1/open_ticket_system/ticket_template/validator"
 	"github.com/gin-gonic/gin"
+	"github.com/pkg/errors"
 	"gorm.io/gorm"
 )
 
 // TicketTemplateController 工单模板控制器
 type TicketTemplateController struct {
-	templateService TicketTemplateService
+	service *TicketTemplateService
 }
 
-// NewTicketTemplateController 创建工单模板控制器实例
-func NewTicketTemplateController(db *gorm.DB) *TicketTemplateController {
+// NewTicketTemplateController 创建新的工单模板控制器
+func NewTicketTemplateController(db interface{}) *TicketTemplateController {
+	// 创建管理器
+	templateManager := manager.NewTicketTemplateManager(db.(*gorm.DB))
+	punchedTapeIntegration := manager.NewPunchedTapeIntegration(db.(*gorm.DB))
+
+	// 创建服务
+	service := NewTicketTemplateService(templateManager, punchedTapeIntegration)
+
 	return &TicketTemplateController{
-		templateService: NewTicketTemplateService(db),
+		service: service,
+	}
+}
+
+// Register 注册路由
+func (c *TicketTemplateController) Register(router *gin.RouterGroup) {
+	templates := router.Group("/ticket_templates")
+	{
+		templates.POST("", c.CreateTicketTemplate)
+		templates.GET("", c.ListTicketTemplates)
+		templates.GET("/:id", c.GetTicketTemplateByID)
+		templates.PUT("/:id", c.UpdateTicketTemplate)
+		templates.DELETE("/:id", c.DeleteTicketTemplate)
 	}
 }
 
 // CreateTicketTemplate 创建工单模板
-// @Summary      创建工单模板
-// @Description  创建新的工单模板
-// @Tags         ticket-templates
-// @Accept       json
-// @Produce      json
-// @Param        request body models.CreateTicketTemplateRequest true "创建模板请求"
-// @Success      200  {object}  models.CreateTicketTemplateResponse
-// @Failure      400  {object}  map[string]interface{} "请求参数错误"
-// @Failure      500  {object}  map[string]interface{} "服务器内部错误"
-// @Router       /ticket-templates [post]
 func (c *TicketTemplateController) CreateTicketTemplate(ctx *gin.Context) {
-	var req models.CreateTicketTemplateRequest
-	if err := ctx.ShouldBindJSON(&req); err != nil {
+	logger := utils.GetLogger()
+
+	logger.Printf("[INFO] Creating ticket template - request from: %s", ctx.ClientIP())
+
+	var request models.CreateTicketTemplateAPI
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		logger.Printf("[ERROR] Failed to bind JSON request - error: %v", err)
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request format"})
+		return
+	}
+
+	// 验证请求
+	if err := validator.ValidateCreateTicketTemplateRequest(&request); err != nil {
+		logger.Printf("[ERROR] Request validation failed - error: %v", err)
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	// 使用验证器校验请求
-	if err := validator.ValidateCreateTicketTemplateRequest(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	response, err := c.templateService.CreateTicketTemplate(ctx, &req)
+	// 调用服务
+	template, err := c.service.CreateTicketTemplate(ctx, &request)
 	if err != nil {
+		logger.Printf("[ERROR] Failed to create ticket template - error: %v", err)
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	ctx.JSON(http.StatusOK, response)
+	logger.Printf("[INFO] Successfully created ticket template - id: %d", template.ID)
+	ctx.JSON(http.StatusCreated, template)
 }
 
 // GetTicketTemplateByID 根据ID获取工单模板
-// @Summary      获取工单模板详情
-// @Description  根据ID获取工单模板详细信息
-// @Tags         ticket-templates
-// @Accept       json
-// @Produce      json
-// @Param        id path int true "模板ID"
-// @Success      200  {object}  models.TicketTemplateResponse
-// @Failure      400  {object}  map[string]interface{} "请求参数错误"
-// @Failure      404  {object}  map[string]interface{} "模板不存在"
-// @Router       /ticket-templates/{id} [get]
 func (c *TicketTemplateController) GetTicketTemplateByID(ctx *gin.Context) {
+	logger := utils.GetLogger()
+
 	idStr := ctx.Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+		logger.Printf("[ERROR] Invalid ID parameter - id: %s, error: %v", idStr, err)
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID parameter"})
 		return
 	}
 
-	template, err := c.templateService.GetTicketTemplateByID(ctx, id)
+	logger.Printf("[INFO] Getting ticket template by ID - id: %d, request from: %s", id, ctx.ClientIP())
+
+	template, err := c.service.GetTicketTemplateByID(ctx, id)
 	if err != nil {
-		ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		logger.Printf("[ERROR] Failed to get ticket template - id: %d, error: %v", id, err)
+		if errors.Is(err, errors.New("ticket template not found")) {
+			ctx.JSON(http.StatusNotFound, gin.H{"error": "Ticket template not found"})
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
+	logger.Printf("[INFO] Successfully retrieved ticket template - id: %d", id)
 	ctx.JSON(http.StatusOK, template)
 }
 
-// UpdateTicketTemplate 更新工单模板
-// @Summary      更新工单模板
-// @Description  更新工单模板信息
-// @Tags         ticket-templates
-// @Accept       json
-// @Produce      json
-// @Param        id path int true "模板ID"
-// @Param        request body models.UpdateTicketTemplateRequest true "更新模板请求"
-// @Success      200  {object}  models.UpdateTicketTemplateResponse
-// @Failure      400  {object}  map[string]interface{} "请求参数错误"
-// @Failure      404  {object}  map[string]interface{} "模板不存在"
-// @Failure      500  {object}  map[string]interface{} "服务器内部错误"
-// @Router       /ticket-templates/{id} [put]
-func (c *TicketTemplateController) UpdateTicketTemplate(ctx *gin.Context) {
-	idStr := ctx.Param("id")
-	id, err := strconv.Atoi(idStr)
+// ListTicketTemplates 获取工单模板列表
+func (c *TicketTemplateController) ListTicketTemplates(ctx *gin.Context) {
+	logger := utils.GetLogger()
+
+	// 获取分页参数
+	pageStr := ctx.DefaultQuery("page", "1")
+	sizeStr := ctx.DefaultQuery("size", "10")
+
+	page, err := strconv.Atoi(pageStr)
+	if err != nil || page < 1 {
+		page = 1
+	}
+
+	size, err := strconv.Atoi(sizeStr)
+	if err != nil || size < 1 || size > 100 {
+		size = 10
+	}
+
+	logger.Printf("[INFO] Listing ticket templates - page: %d, size: %d, request from: %s", page, size, ctx.ClientIP())
+
+	templates, total, err := c.service.ListTicketTemplates(ctx, page, size)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
-		return
-	}
-
-	var req models.UpdateTicketTemplateRequest
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	req.ID = id
-
-	// 使用验证器校验请求
-	if err := validator.ValidateUpdateTicketTemplateRequest(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	response, err := c.templateService.UpdateTicketTemplate(ctx, &req)
-	if err != nil {
+		logger.Printf("[ERROR] Failed to list ticket templates - error: %v", err)
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	ctx.JSON(http.StatusOK, response)
+	result := gin.H{
+		"templates": templates,
+		"total":     total,
+		"page":      page,
+		"size":      size,
+	}
+
+	logger.Printf("[INFO] Successfully listed ticket templates - count: %d, total: %d", len(templates), total)
+	ctx.JSON(http.StatusOK, result)
+}
+
+// UpdateTicketTemplate 更新工单模板
+func (c *TicketTemplateController) UpdateTicketTemplate(ctx *gin.Context) {
+	logger := utils.GetLogger()
+
+	idStr := ctx.Param("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		logger.Printf("[ERROR] Invalid ID parameter - id: %s, error: %v", idStr, err)
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID parameter"})
+		return
+	}
+
+	var request models.UpdateTicketTemplateAPI
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		logger.Printf("[ERROR] Failed to bind JSON request - id: %d, error: %v", id, err)
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request format"})
+		return
+	}
+
+	// 验证请求
+	if err := validator.ValidateUpdateTicketTemplateRequest(&request); err != nil {
+		logger.Printf("[ERROR] Request validation failed - id: %d, error: %v", id, err)
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	logger.Printf("[INFO] Updating ticket template - id: %d, request from: %s", id, ctx.ClientIP())
+
+	// 调用服务
+	template, err := c.service.UpdateTicketTemplate(ctx, id, &request)
+	if err != nil {
+		logger.Printf("[ERROR] Failed to update ticket template - id: %d, error: %v", id, err)
+		if errors.Is(err, errors.New("ticket template not found")) {
+			ctx.JSON(http.StatusNotFound, gin.H{"error": "Ticket template not found"})
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	logger.Printf("[INFO] Successfully updated ticket template - id: %d", id)
+	ctx.JSON(http.StatusOK, template)
 }
 
 // DeleteTicketTemplate 删除工单模板
-// @Summary      删除工单模板
-// @Description  根据ID删除工单模板
-// @Tags         ticket-templates
-// @Accept       json
-// @Produce      json
-// @Param        id path int true "模板ID"
-// @Success      200  {object}  models.DeleteTicketTemplateResponse
-// @Failure      400  {object}  map[string]interface{} "请求参数错误"
-// @Failure      500  {object}  map[string]interface{} "服务器内部错误"
-// @Router       /ticket-templates/{id} [delete]
 func (c *TicketTemplateController) DeleteTicketTemplate(ctx *gin.Context) {
+	logger := utils.GetLogger()
+
 	idStr := ctx.Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+		logger.Printf("[ERROR] Invalid ID parameter - id: %s, error: %v", idStr, err)
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID parameter"})
 		return
 	}
 
-	req := models.DeleteTicketTemplateRequest{ID: id}
-	response, err := c.templateService.DeleteTicketTemplate(ctx, &req)
-	if err != nil {
+	logger.Printf("[INFO] Deleting ticket template - id: %d, request from: %s", id, ctx.ClientIP())
+
+	// 调用服务
+	if err := c.service.DeleteTicketTemplate(ctx, id); err != nil {
+		logger.Printf("[ERROR] Failed to delete ticket template - id: %d, error: %v", id, err)
+		if errors.Is(err, errors.New("ticket template not found")) {
+			ctx.JSON(http.StatusNotFound, gin.H{"error": "Ticket template not found"})
+			return
+		}
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	ctx.JSON(http.StatusOK, response)
-}
-
-// ListTicketTemplates 查询工单模板列表
-// @Summary      查询工单模板列表
-// @Description  分页查询工单模板列表，支持筛选和排序
-// @Tags         ticket-templates
-// @Accept       json
-// @Produce      json
-// @Param        page query int false "页码" default(1)
-// @Param        size query int false "每页数量" default(10)
-// @Param        name query string false "模板名称"
-// @Param        creator query string false "创建者"
-// @Param        version query string false "版本号"
-// @Param        builtin query bool false "是否内置"
-// @Success      200  {object}  models.ListTicketTemplateResponse
-// @Failure      400  {object}  map[string]interface{} "请求参数错误"
-// @Failure      500  {object}  map[string]interface{} "服务器内部错误"
-// @Router       /ticket-templates [get]
-func (c *TicketTemplateController) ListTicketTemplates(ctx *gin.Context) {
-	var req models.ListTicketTemplateRequest
-	if err := ctx.ShouldBindQuery(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	// 使用验证器校验请求
-	if err := validator.ValidateListTicketTemplateRequest(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	response, err := c.templateService.ListTicketTemplates(ctx, &req)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	ctx.JSON(http.StatusOK, response)
+	logger.Printf("[INFO] Successfully deleted ticket template - id: %d", id)
+	ctx.JSON(http.StatusOK, gin.H{"message": "Ticket template deleted successfully"})
 }

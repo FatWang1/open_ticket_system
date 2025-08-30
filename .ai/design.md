@@ -303,10 +303,15 @@ type DatabaseConfig struct {
 
 ## 6. 中间件设计
 使用 https://github.com/FatWang1/fatwang-go-utils/blob/master/utils/logger.go 进行日志记录
+
 使用 https://github.com/golang-jwt/jwt/v5 进行JWT验证
+
 使用 https://github.com/gin-contrib/cors 进行跨域请求
+
 使用 https://github.com/FatWang1/punched-tape 进行核心业务处理 包括但不限于 进行工单/工单模版的创建、更新、删除、查询、审批、关闭
+
 使用 https://github.com/go-playground/validator 进行参数验证
+
 使用 https://github.com/spf13/viper 进行配置管理
 
 ## 7. 项目配置信息

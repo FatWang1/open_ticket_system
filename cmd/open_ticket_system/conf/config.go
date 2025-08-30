@@ -3,9 +3,12 @@ package conf
 import (
 	"fmt"
 	"log"
+	"os"
+
+	"github.com/gin-gonic/gin"
+	"github.com/spf13/viper"
 
 	"github.com/FatWang1/open_ticket_system/internal/client/database"
-	"github.com/spf13/viper"
 )
 
 // Config 应用配置结构
@@ -60,9 +63,20 @@ type JWTConfig struct {
 	ExpireTime int    `yaml:"expire_time" default:"24"` // 小时
 }
 
+func (j *JWTConfig) loadSecret() {
+	envSecret := os.Getenv("JWT_SECRET")
+	if envSecret == "" {
+		log.Println("JWT_SECRET environment variable not set, using default value")
+		return
+	}
+	j.Secret = envSecret
+}
+
 // LoadConfig 加载配置文件
 func LoadConfig(configPath string) (*Config, error) {
-	viper.SetConfigFile(configPath)
+
+	viper.AddConfigPath(configPath)
+	viper.SetConfigName(fmt.Sprintf("config.%s.yaml", gin.Mode()))
 	viper.SetConfigType("yaml")
 
 	// 设置默认值
@@ -81,7 +95,7 @@ func LoadConfig(configPath string) (*Config, error) {
 	if err := validateConfig(&config); err != nil {
 		return nil, fmt.Errorf("config validation failed: %w", err)
 	}
-
+	config.JWT.loadSecret()
 	log.Println("Configuration loaded successfully")
 	return &config, nil
 }

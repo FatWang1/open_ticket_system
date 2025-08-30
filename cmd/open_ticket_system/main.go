@@ -33,38 +33,40 @@ import (
 	"github.com/FatWang1/open_ticket_system/cmd/open_ticket_system/conf"
 	"github.com/FatWang1/open_ticket_system/internal/client/database"
 	"github.com/FatWang1/open_ticket_system/internal/middleware"
+	"github.com/FatWang1/open_ticket_system/internal/utils"
 	"github.com/FatWang1/open_ticket_system/ticket"
 	"github.com/FatWang1/open_ticket_system/ticket_template"
-	"github.com/gin-gonic/gin"
 
 	_ "github.com/FatWang1/open_ticket_system/docs"
+	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 func main() {
+	// 初始化日志
+	utils.InitLogger()
+	logger := utils.GetLogger()
+
 	// 加载配置
-	config, err := conf.LoadConfig("conf/config.dev.yaml")
+	configPath := "cmd/open_ticket_system/conf/"
+
+	config, err := conf.LoadConfig(configPath)
 	if err != nil {
+		logger.Printf("Failed to load config: %v", err)
 		log.Fatalf("Failed to load config: %v", err)
 	}
 
 	// 初始化数据库
 	mysqlClient, err := database.NewMySQLClient(config.GetMySQLConfig())
 	if err != nil {
+		logger.Printf("Failed to initialize MySQL client: %v", err)
 		log.Fatalf("Failed to initialize MySQL client: %v", err)
 	}
 	defer mysqlClient.Close()
 
-	// 设置Gin模式
-	if config.Log.Level == "debug" {
-		gin.SetMode(gin.DebugMode)
-	} else {
-		gin.SetMode(gin.ReleaseMode)
-	}
-
 	// 创建Gin引擎
-	engine := gin.New()
+	engine := gin.Default()
 
 	// 添加中间件
 	engine.Use(gin.Logger())
@@ -78,15 +80,6 @@ func main() {
 
 	// 注册路由
 	registerRoutes(engine, mysqlClient, jwtConfig)
-
-	// 健康检查端点
-	engine.GET("/health", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"status":    "healthy",
-			"timestamp": time.Now().Format(time.RFC3339),
-			"version":   "1.0.0", // Placeholder for actual version
-		})
-	})
 
 	// 创建HTTP服务器
 	server := &http.Server{

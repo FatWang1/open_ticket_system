@@ -518,23 +518,19 @@ func TestTemplateBoundaryConditions(t *testing.T) {
 		ctx := context.Background()
 
 		// 创建包含20+步骤的模板
-		stepConfigs := make([]*models.StepConfig, 25)
+		stepConfigs := make([]*models.StepConfigAPI, 25)
 		for i := 0; i < 25; i++ {
-			stepConfigs[i] = &models.StepConfig{
-				Step:     fmt.Sprintf("step%d", i+1),
-				SignType: "anyone_sign",
-				Operators: []models.StepOperator{
-					{Operator: fmt.Sprintf("user%d", i+1)},
-				},
-				NextSteps: []models.NextStep{
-					{ToStep: fmt.Sprintf("step%d", i+2), Operation: "approve"},
-				},
+			stepConfigs[i] = &models.StepConfigAPI{
+				Step:         fmt.Sprintf("step%d", i+1),
+				SignType:     "anyone_sign",
+				OperatorList: []string{fmt.Sprintf("user%d", i+1)},
+				NextStepList: []string{fmt.Sprintf("step%d", i+2)},
 			}
 		}
 		// 最后一个步骤没有下一步
 		stepConfigs[24].NextSteps = []models.NextStep{}
 
-		req := &models.CreateTicketTemplateRequest{
+		req := &models.CreateTicketTemplateAPI{
 			Name:        "多步骤模板",
 			Memo:        "测试多步骤",
 			Version:     "1.0",

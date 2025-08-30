@@ -123,7 +123,7 @@ metadata:
   labels:
     app: open-ticket-system
 data:
-  mysql_host: "localhost"
+  mysql_host: "mysql"
   mysql_port: "3306"
   mysql_username: "root"
   mysql_database: "open_ticket_system"
@@ -138,7 +138,7 @@ metadata:
 type: Opaque
 data:
   # 注意：这些是base64编码的值，生产环境请使用真实的密钥
-  mysql-password: cGFzc3dvcmQ=  # password
+  mysql-password: MTIzNDU2Cg==  # password
   jwt-secret: cHJvZHVjdGlvbi1zZWNyZXQ=  # production-secret
 ---
 apiVersion: networking.k8s.io/v1

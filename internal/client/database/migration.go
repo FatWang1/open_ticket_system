@@ -111,18 +111,46 @@ func (m *Migrator) runMigration(version string, up func(*gorm.DB) error) error {
 
 // migration001InitialSchema 初始数据库结构
 func (m *Migrator) migration001InitialSchema(tx *gorm.DB) error {
-	// 创建基础表结构
-	return tx.AutoMigrate(
-		&models.User{},
-		&models.Ticket{},
-		&models.TicketOperator{},
-		&models.TicketOperatedUser{},
-		&models.TicketTemplate{},
-		&models.TemplateEndStep{},
-		&models.StepConfig{},
-		&models.StepOperator{},
-		&models.NextStep{},
-	)
+	// 创建基础表结构，按照依赖关系顺序创建
+	// 1. 先创建没有外键依赖的表
+	if err := tx.AutoMigrate(&models.User{}); err != nil {
+		return fmt.Errorf("failed to migrate User: %w", err)
+	}
+
+	if err := tx.AutoMigrate(&models.TicketTemplate{}); err != nil {
+		return fmt.Errorf("failed to migrate TicketTemplate: %w", err)
+	}
+
+	if err := tx.AutoMigrate(&models.Ticket{}); err != nil {
+		return fmt.Errorf("failed to migrate Ticket: %w", err)
+	}
+
+	// 2. 创建有外键依赖的表
+	if err := tx.AutoMigrate(&models.TicketOperator{}); err != nil {
+		return fmt.Errorf("failed to migrate TicketOperator: %w", err)
+	}
+
+	if err := tx.AutoMigrate(&models.TicketOperatedUser{}); err != nil {
+		return fmt.Errorf("failed to migrate TicketOperatedUser: %w", err)
+	}
+
+	if err := tx.AutoMigrate(&models.TemplateEndStep{}); err != nil {
+		return fmt.Errorf("failed to migrate TemplateEndStep: %w", err)
+	}
+
+	if err := tx.AutoMigrate(&models.StepConfigDB{}); err != nil {
+		return fmt.Errorf("failed to migrate StepConfigDB: %w", err)
+	}
+
+	if err := tx.AutoMigrate(&models.StepOperator{}); err != nil {
+		return fmt.Errorf("failed to migrate StepOperator: %w", err)
+	}
+
+	if err := tx.AutoMigrate(&models.NextStep{}); err != nil {
+		return fmt.Errorf("failed to migrate NextStep: %w", err)
+	}
+
+	return nil
 }
 
 // migration002AddTemplateFields 添加模板字段
