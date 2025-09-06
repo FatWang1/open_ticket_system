@@ -33,3 +33,49 @@ type UpdateTicketTemplateAPI struct {
 	EndStepList []string         `json:"end_step,omitempty" validate:"omitempty,min=1"`
 	ConfigList  []*StepConfigAPI `json:"config,omitempty" validate:"omitempty,min=1"`
 }
+
+// LoginRequest 登录请求
+type LoginRequest struct {
+	Username string `json:"username" validate:"required,min=3,max=50" example:"admin"`
+	Password string `json:"password" validate:"required,min=6,max=100" example:"123456"`
+}
+
+// LoginResponse 登录响应
+type LoginResponse struct {
+	AccessToken  string `json:"access_token" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."`
+	RefreshToken string `json:"refresh_token" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."`
+	ExpiresIn    int64  `json:"expires_in" example:"86400"`
+	TokenType    string `json:"token_type" example:"Bearer"`
+}
+
+// RefreshTokenRequest 刷新token请求
+type RefreshTokenRequest struct {
+	RefreshToken string `json:"refresh_token" validate:"required" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."`
+}
+
+// RefreshTokenResponse 刷新token响应
+type RefreshTokenResponse struct {
+	AccessToken  string `json:"access_token" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."`
+	RefreshToken string `json:"refresh_token" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."`
+	ExpiresIn    int64  `json:"expires_in" example:"86400"`
+	TokenType    string `json:"token_type" example:"Bearer"`
+}
+
+// RegisterRequest 注册请求
+type RegisterRequest struct {
+	Username string `json:"username" validate:"required,min=3,max=50" example:"newuser"`
+	Password string `json:"password" validate:"required,min=6,max=100" example:"123456"`
+	Email    string `json:"email" validate:"required,email" example:"user@example.com"`
+	Nickname string `json:"nickname" validate:"omitempty,max=50" example:"新用户"`
+}
+
+// RegisterResponse 注册响应
+type RegisterResponse struct {
+	User User `json:"user"`
+}
+
+// ErrorResponse 错误响应
+type ErrorResponse struct {
+	Error   string `json:"error" example:"错误信息"`
+	Details string `json:"details,omitempty" example:"详细错误信息"`
+}

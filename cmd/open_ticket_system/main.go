@@ -1,6 +1,6 @@
 // @title           Open Ticket System API
 // @version         1.0
-// @description     这是一个完整的工单管理系统API，支持工单创建、审批、模板管理等功能。
+// @description     这是一个完整的工单管理系统API，支持用户认证、工单创建、审批、模板管理等功能。
 // @termsOfService  http://swagger.io/terms/
 
 // @contact.name   API Support
@@ -16,7 +16,7 @@
 // @securityDefinitions.apikey ApiKeyAuth
 // @in header
 // @name Authorization
-// @description 请输入JWT token，格式：Bearer {token}
+// @description 请输入JWT access token，格式：Bearer {access_token}
 
 package main
 
@@ -30,38 +30,40 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/FatWang1/fatwang-go-utils/utils"
+	"github.com/FatWang1/open_ticket_system/auth"
 	"github.com/FatWang1/open_ticket_system/cmd/open_ticket_system/conf"
 	"github.com/FatWang1/open_ticket_system/internal/client/database"
 	"github.com/FatWang1/open_ticket_system/internal/middleware"
-	"github.com/FatWang1/open_ticket_system/internal/utils"
 	"github.com/FatWang1/open_ticket_system/ticket"
 	"github.com/FatWang1/open_ticket_system/ticket_template"
 
 	_ "github.com/FatWang1/open_ticket_system/docs"
 	"github.com/gin-gonic/gin"
+	"github.com/pkg/errors"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 func main() {
-	// 初始化日志
-	utils.InitLogger()
-	logger := utils.GetLogger()
 
 	// 加载配置
 	configPath := "cmd/open_ticket_system/conf/"
-
 	config, err := conf.LoadConfig(configPath)
 	if err != nil {
-		logger.Printf("Failed to load config: %v", err)
 		log.Fatalf("Failed to load config: %v", err)
 	}
 
+	var logger utils.Logger
+	if gin.Mode() == gin.ReleaseMode {
+		logger = utils.SetupLogging(config.Log)
+	} else {
+		logger = utils.MustNewDevelopment()
+	}
 	// 初始化数据库
 	mysqlClient, err := database.NewMySQLClient(config.GetMySQLConfig())
 	if err != nil {
-		logger.Printf("Failed to initialize MySQL client: %v", err)
-		log.Fatalf("Failed to initialize MySQL client: %v", err)
+		logger.Fatalf("Failed to initialize MySQL client: %v", err)
 	}
 	defer mysqlClient.Close()
 
@@ -75,11 +77,13 @@ func main() {
 
 	// 创建JWT配置
 	jwtConfig := &middleware.JWTConfig{
-		Secret: config.JWT.Secret,
+		Secret:          config.JWT.Secret,
+		AccessTokenExp:  time.Duration(config.JWT.AccessTokenExpire) * time.Hour,
+		RefreshTokenExp: time.Duration(config.JWT.RefreshTokenExpire) * time.Hour,
 	}
 
 	// 注册路由
-	registerRoutes(engine, mysqlClient, jwtConfig)
+	registerRoutes(engine, mysqlClient, jwtConfig, logger)
 
 	// 创建HTTP服务器
 	server := &http.Server{
@@ -89,9 +93,9 @@ func main() {
 
 	// 启动服务器
 	go func() {
-		log.Printf("Server starting on %s:%d", config.Server.Host, config.Server.Port)
-		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("Failed to start server: %v", err)
+		logger.Infof("Server starting on %s:%d", config.Server.Host, config.Server.Port)
+		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			logger.Fatalf("Failed to start server: %v", err)
 		}
 	}()
 
@@ -114,7 +118,7 @@ func main() {
 }
 
 // registerRoutes 注册路由
-func registerRoutes(engine *gin.Engine, mysqlClient *database.MySQLClient, jwtConfig *middleware.JWTConfig) {
+func registerRoutes(engine *gin.Engine, mysqlClient *database.MySQLClient, jwtConfig *middleware.JWTConfig, logger utils.Logger) {
 	// 健康检查
 	engine.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "ok", "timestamp": time.Now().Unix()})
@@ -126,6 +130,10 @@ func registerRoutes(engine *gin.Engine, mysqlClient *database.MySQLClient, jwtCo
 	// API版本组
 	v1 := engine.Group("/api/v1")
 	{
+		// 认证相关路由
+		authController := auth.NewAuthController(mysqlClient.DB, jwtConfig, logger)
+		authController.RegisterRoutes(v1)
+
 		// 工单相关路由
 		ticketController := ticket.NewTicketController(mysqlClient.DB)
 		ticketController.Register(v1)
@@ -137,6 +145,7 @@ func registerRoutes(engine *gin.Engine, mysqlClient *database.MySQLClient, jwtCo
 
 	// 需要认证的路由组
 	auth := engine.Group("/api/v1")
+	// 登陆获取jwt token&refresh token
 	auth.Use(middleware.JWTAuthMiddleware(jwtConfig))
 	{
 		// 这里可以添加需要认证的路由

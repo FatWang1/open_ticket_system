@@ -110,4 +110,3 @@ fi
 
 echo ""
 echo -e "${GREEN}构建完成!${NC}"
-echo "运行容器: docker run -p 8080:8080 $IMAGE_NAME:$TAG"

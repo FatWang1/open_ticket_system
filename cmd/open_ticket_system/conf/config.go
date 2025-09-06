@@ -8,16 +8,17 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
 
+	"github.com/FatWang1/fatwang-go-utils/utils"
 	"github.com/FatWang1/open_ticket_system/internal/client/database"
 )
 
 // Config 应用配置结构
 type Config struct {
-	Server   ServerConfig   `yaml:"server"`
-	Database DatabaseConfig `yaml:"database"`
-	Redis    RedisConfig    `yaml:"redis"`
-	Log      LogConfig      `yaml:"log"`
-	JWT      JWTConfig      `yaml:"jwt"`
+	Server   *ServerConfig    `yaml:"server"`
+	Database *DatabaseConfig  `yaml:"database"`
+	Log      *utils.LogConfig `yaml:"log"`
+	JWT      *JWTConfig       `yaml:"jwt"`
+	Redis    *RedisConfig     `yaml:"redis"`
 }
 
 // ServerConfig 服务器配置
@@ -31,7 +32,7 @@ type ServerConfig struct {
 type DatabaseConfig struct {
 	Driver   string `yaml:"driver" default:"mysql"`
 	Host     string `yaml:"host" default:"localhost"`
-	Port     int    `yaml:"port" default:"3306"`
+	Port     int    `yaml:"port"`
 	Username string `yaml:"username"`
 	Password string `yaml:"password"`
 	Database string `yaml:"database"`
@@ -46,21 +47,11 @@ type RedisConfig struct {
 	Database int    `yaml:"database" default:"0"`
 }
 
-// LogConfig 日志配置
-type LogConfig struct {
-	Level      string `yaml:"level" default:"info"`
-	Format     string `yaml:"format" default:"json"`
-	Output     string `yaml:"output" default:"stdout"`
-	MaxSize    int    `yaml:"max_size" default:"100"`
-	MaxBackups int    `yaml:"max_backups" default:"3"`
-	MaxAge     int    `yaml:"max_age" default:"28"`
-	Compress   bool   `yaml:"compress" default:"true"`
-}
-
 // JWTConfig JWT配置
 type JWTConfig struct {
-	Secret     string `yaml:"secret"`
-	ExpireTime int    `yaml:"expire_time" default:"24"` // 小时
+	Secret             string `yaml:"secret"`
+	AccessTokenExpire  int    `yaml:"access_token_expire" destructure:"access_token_expire"`   // access token过期时间(小时)
+	RefreshTokenExpire int    `yaml:"refresh_token_expire" destructure:"refresh_token_expire"` // refresh token过期时间(小时，默认7天)
 }
 
 func (j *JWTConfig) loadSecret() {
@@ -74,20 +65,20 @@ func (j *JWTConfig) loadSecret() {
 
 // LoadConfig 加载配置文件
 func LoadConfig(configPath string) (*Config, error) {
-
-	viper.AddConfigPath(configPath)
-	viper.SetConfigName(fmt.Sprintf("config.%s.yaml", gin.Mode()))
-	viper.SetConfigType("yaml")
+	v := viper.New()
+	v.AddConfigPath(configPath)
+	v.SetConfigName(fmt.Sprintf("config.%s.yaml", gin.Mode()))
+	v.SetConfigType("yaml")
 
 	// 设置默认值
-	setDefaults()
+	setDefaults(v)
 
-	if err := viper.ReadInConfig(); err != nil {
+	if err := v.ReadInConfig(); err != nil {
 		return nil, fmt.Errorf("failed to read config file: %w", err)
 	}
 
 	var config Config
-	if err := viper.Unmarshal(&config); err != nil {
+	if err := v.Unmarshal(&config); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
 	}
 
@@ -101,29 +92,30 @@ func LoadConfig(configPath string) (*Config, error) {
 }
 
 // setDefaults 设置默认值
-func setDefaults() {
-	viper.SetDefault("server.port", 8080)
-	viper.SetDefault("server.host", "localhost")
-	viper.SetDefault("server.timeout", 30)
+func setDefaults(v *viper.Viper) {
+	v.SetDefault("server.port", 8080)
+	v.SetDefault("server.host", "localhost")
+	v.SetDefault("server.timeout", 30)
 
-	viper.SetDefault("database.driver", "mysql")
-	viper.SetDefault("database.host", "localhost")
-	viper.SetDefault("database.port", 3306)
-	viper.SetDefault("database.charset", "utf8mb4")
+	v.SetDefault("database.driver", "mysql")
+	v.SetDefault("database.host", "localhost")
+	v.SetDefault("database.port", 3306)
+	v.SetDefault("database.charset", "utf8mb4")
 
-	viper.SetDefault("redis.host", "localhost")
-	viper.SetDefault("redis.port", 6379)
-	viper.SetDefault("redis.database", 0)
+	v.SetDefault("redis.host", "localhost")
+	v.SetDefault("redis.port", 6379)
+	v.SetDefault("redis.database", 0)
 
-	viper.SetDefault("log.level", "info")
-	viper.SetDefault("log.format", "json")
-	viper.SetDefault("log.output", "stdout")
-	viper.SetDefault("log.max_size", 100)
-	viper.SetDefault("log.max_backups", 3)
-	viper.SetDefault("log.max_age", 28)
-	viper.SetDefault("log.compress", true)
+	v.SetDefault("log.level", "info")
+	v.SetDefault("log.format", "json")
+	v.SetDefault("log.output", "stdout")
+	v.SetDefault("log.max_size", 100)
+	v.SetDefault("log.max_backups", 3)
+	v.SetDefault("log.max_age", 28)
+	v.SetDefault("log.compress", true)
 
-	viper.SetDefault("jwt.expire_time", 24)
+	v.SetDefault("jwt.access_token_expire", 1)
+	v.SetDefault("jwt.refresh_token_expire", 168)
 }
 
 // validateConfig 验证配置

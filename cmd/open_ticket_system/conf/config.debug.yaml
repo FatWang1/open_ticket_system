@@ -41,4 +41,5 @@ accessLog:
 
 jwt:
   secret: "test-secret-key-for-testing-only"
-  expire_time: 24
+  access_token_expire: 1   # access token过期时间(小时)
+  refresh_token_expire: 168 # refresh token过期时间(小时，7天)

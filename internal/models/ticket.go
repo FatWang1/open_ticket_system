@@ -92,13 +92,16 @@ type NextStep struct {
 
 // User 用户表结构体
 type User struct {
-	gorm.Model
-	Username    string    `gorm:"type:varchar(50);uniqueIndex;not null" json:"username"`
-	Password    string    `gorm:"type:varchar(255);not null" json:"-"`
-	Email       string    `gorm:"type:varchar(100);uniqueIndex" json:"email"`
-	Nickname    string    `gorm:"type:varchar(50)" json:"nickname"`
-	Avatar      string    `gorm:"type:varchar(255)" json:"avatar"`
-	Status      int8      `gorm:"type:tinyint;default:1;comment:1正常,2禁用,3注销" json:"status"`
-	LastLoginAt time.Time `gorm:"type:datetime" json:"last_login_at"`
-	RoleID      uint      `gorm:"index" json:"role_id"`
+	ID          uint       `gorm:"primarykey" json:"id" example:"1"`
+	CreatedAt   time.Time  `json:"created_at" example:"2024-01-01T00:00:00Z"`
+	UpdatedAt   time.Time  `json:"updated_at" example:"2024-01-01T00:00:00Z"`
+	DeletedAt   *time.Time `gorm:"index" json:"deleted_at,omitempty"`
+	Username    string     `gorm:"type:varchar(50);uniqueIndex;not null" json:"username" example:"admin"`
+	Password    string     `gorm:"type:varchar(255);not null" json:"-"`
+	Email       string     `gorm:"type:varchar(100);uniqueIndex" json:"email" example:"admin@example.com"`
+	Nickname    string     `gorm:"type:varchar(50)" json:"nickname" example:"管理员"`
+	Avatar      string     `gorm:"type:varchar(255)" json:"avatar" example:"https://example.com/avatar.jpg"`
+	Status      int8       `gorm:"type:tinyint;default:1;comment:1正常,2禁用,3注销" json:"status" example:"1"`
+	LastLoginAt *time.Time `gorm:"type:datetime" json:"last_login_at" example:"2024-01-01T00:00:00Z"`
+	RoleID      uint       `gorm:"index" json:"role_id" example:"1"`
 }
