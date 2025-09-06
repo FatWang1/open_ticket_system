@@ -55,7 +55,7 @@ func (m *TicketManager) CreateTicket(ctx context.Context, ticket *models.Ticket,
 // GetTicketByID 根据ID获取工单
 func (m *TicketManager) GetTicketByID(ctx context.Context, id int) (*models.Ticket, error) {
 	var ticket models.Ticket
-	if err := m.db.Preload("Operators").Preload("OperatedUsers").First(&ticket, id).Error; err != nil {
+	if err := m.db.First(&ticket, id).Error; err != nil {
 		return nil, fmt.Errorf("ticket not found: %v", err)
 	}
 	return &ticket, nil
@@ -215,7 +215,7 @@ func (m *TicketManager) ListTickets(ctx context.Context, filters map[string]inte
 	// 分页查询
 	var tickets []*models.Ticket
 	offset := (page - 1) * size
-	if err := query.Preload("Operators").Preload("OperatedUsers").
+	if err := query.
 		Offset(offset).Limit(size).
 		Order("created_at DESC").
 		Find(&tickets).Error; err != nil {

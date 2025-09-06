@@ -79,13 +79,13 @@ type ListTicketResponse struct {
 // CreateTicketTemplateRequest 创建工单模板请求
 // @Description 创建工单模板请求结构
 type CreateTicketTemplateRequest struct {
-	Name        string        `json:"name" validate:"required,min=1,max=100" example:"请假申请模板"`       // 模板名称
-	Memo        string        `json:"memo" validate:"omitempty,max=1000" example:"请假申请流程"`           // 模板备注
-	Version     string        `json:"version" validate:"required,min=1,max=50" example:"1.0"`        // 版本号
-	Creator     string        `json:"creator" validate:"required,min=1,max=50" example:"管理员"`        // 创建者
-	StartStep   string        `json:"start_step" validate:"required,min=1,max=100" example:"submit"` // 起始步骤
-	EndStepList []string      `json:"end_step" validate:"required,min=1" example:"approve,reject"`   // 结束步骤列表
-	ConfigList  []*StepConfig `json:"config" validate:"required,min=1"`                              // 步骤配置列表
+	Name        string           `json:"name" validate:"required,min=1,max=100" example:"请假申请模板"`       // 模板名称
+	Memo        string           `json:"memo" validate:"omitempty,max=1000" example:"请假申请流程"`           // 模板备注
+	Version     string           `json:"version" validate:"required,min=1,max=50" example:"1.0"`        // 版本号
+	Creator     string           `json:"creator" validate:"required,min=1,max=50" example:"管理员"`        // 创建者
+	StartStep   string           `json:"start_step" validate:"required,min=1,max=100" example:"submit"` // 起始步骤
+	EndStepList []string         `json:"end_step" validate:"required,min=1" example:"approve,reject"`   // 结束步骤列表
+	ConfigList  []*StepConfigAPI `json:"config" validate:"required,min=1"`                              // 步骤配置列表
 }
 
 // CreateTicketTemplateResponse 创建工单模板响应
@@ -100,13 +100,13 @@ type GetTicketTemplateRequest struct {
 
 // UpdateTicketTemplateRequest 更新工单模板请求
 type UpdateTicketTemplateRequest struct {
-	ID          int           `json:"id" validate:"required,gt=0"`
-	Name        *string       `json:"name,omitempty" validate:"omitempty,min=1,max=100"`
-	Memo        *string       `json:"memo,omitempty" validate:"omitempty,max=1000"`
-	Creator     *string       `json:"creator,omitempty" validate:"omitempty,min=1,max=50"`
-	StartStep   *string       `json:"start_step,omitempty" validate:"omitempty,min=1,max=100"`
-	EndStepList []string      `json:"end_step,omitempty" validate:"omitempty,min=1"`
-	ConfigList  []*StepConfig `json:"config,omitempty" validate:"omitempty,min=1"`
+	ID          int              `json:"id" validate:"required,gt=0"`
+	Name        *string          `json:"name,omitempty" validate:"omitempty,min=1,max=100"`
+	Memo        *string          `json:"memo,omitempty" validate:"omitempty,max=1000"`
+	Creator     *string          `json:"creator,omitempty" validate:"omitempty,min=1,max=50"`
+	StartStep   *string          `json:"start_step,omitempty" validate:"omitempty,min=1,max=100"`
+	EndStepList []string         `json:"end_step,omitempty" validate:"omitempty,min=1"`
+	ConfigList  []*StepConfigAPI `json:"config,omitempty" validate:"omitempty,min=1"`
 }
 
 // UpdateTicketTemplateResponse 更新工单模板响应

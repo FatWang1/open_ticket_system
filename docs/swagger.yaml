@@ -94,22 +94,19 @@ definitions:
         example: 1
         type: integer
     type: object
-  models.CreateTicketTemplateRequest:
-    type: object
-  models.CreateTicketTemplateResponse:
-    properties:
-      id:
-        type: integer
-    type: object
   models.DeleteTicketResponse:
     properties:
       id:
         type: integer
     type: object
-  models.DeleteTicketTemplateResponse:
+  models.ErrorResponse:
     properties:
-      id:
-        type: integer
+      details:
+        example: 详细错误信息
+        type: string
+      error:
+        example: 错误信息
+        type: string
     type: object
   models.ListTicketResponse:
     description: 查询工单列表响应结构
@@ -124,73 +121,88 @@ definitions:
         example: 100
         type: integer
     type: object
-  models.ListTicketTemplateResponse:
-    description: 查询工单模板列表响应结构
+  models.LoginRequest:
     properties:
-      list:
-        description: 模板列表
-        items:
-          $ref: '#/definitions/models.TicketTemplateResponse'
-        type: array
-      total:
-        description: 总记录数
-        example: 50
-        type: integer
+      password:
+        example: "123456"
+        maxLength: 100
+        minLength: 6
+        type: string
+      username:
+        example: admin
+        maxLength: 50
+        minLength: 3
+        type: string
+    required:
+    - password
+    - username
     type: object
-  models.NextStepResponse:
-    description: 下一步骤响应结构
+  models.LoginResponse:
     properties:
-      id:
-        description: 步骤ID
-        example: 1
+      access_token:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        type: string
+      expires_in:
+        example: 86400
         type: integer
-      operation:
-        description: 操作类型
-        example: approve
+      refresh_token:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
         type: string
-      to_step:
-        description: 目标步骤
-        example: review
+      token_type:
+        example: Bearer
         type: string
     type: object
-  models.StepConfig:
-    type: object
-  models.StepConfigResponse:
-    description: 步骤配置响应结构
+  models.RefreshTokenRequest:
     properties:
-      id:
-        description: 配置ID
-        example: 1
+      refresh_token:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        type: string
+    required:
+    - refresh_token
+    type: object
+  models.RefreshTokenResponse:
+    properties:
+      access_token:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        type: string
+      expires_in:
+        example: 86400
         type: integer
-      joint_sign_rate:
-        description: 联合签名比例
-        example: 0.5
-        type: number
-      next_steps:
-        description: 下一步骤列表
-        items:
-          $ref: '#/definitions/models.NextStepResponse'
-        type: array
-      operators:
-        description: 操作人列表
-        example:
-        - 张三
-        - 李四
-        items:
-          type: string
-        type: array
-      sign_type:
-        description: 签名类型
-        example: serial_sign
+      refresh_token:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
         type: string
-      state:
-        description: 步骤状态
-        example: pending
+      token_type:
+        example: Bearer
         type: string
-      step:
-        description: 步骤名
-        example: submit
+    type: object
+  models.RegisterRequest:
+    properties:
+      email:
+        example: user@example.com
         type: string
+      nickname:
+        example: 新用户
+        maxLength: 50
+        type: string
+      password:
+        example: "123456"
+        maxLength: 100
+        minLength: 6
+        type: string
+      username:
+        example: newuser
+        maxLength: 50
+        minLength: 3
+        type: string
+    required:
+    - email
+    - password
+    - username
+    type: object
+  models.RegisterResponse:
+    properties:
+      user:
+        $ref: '#/definitions/models.User'
     type: object
   models.TicketResponse:
     description: 工单响应结构
@@ -247,63 +259,6 @@ definitions:
         example: "2025-01-27T14:30:00Z"
         type: string
     type: object
-  models.TicketTemplateResponse:
-    description: 工单模板响应结构
-    properties:
-      builtin:
-        description: 是否内置
-        example: false
-        type: boolean
-      created_at:
-        description: 创建时间
-        example: "2025-01-27T14:30:00Z"
-        type: string
-      creator:
-        description: 创建者
-        example: 管理员
-        type: string
-      end_steps:
-        description: 结束步骤列表
-        example:
-        - approve
-        - reject
-        items:
-          type: string
-        type: array
-      id:
-        description: 模板ID
-        example: 1
-        type: integer
-      memo:
-        description: 模板备注
-        example: 请假申请流程
-        type: string
-      name:
-        description: 模板名称
-        example: 请假申请模板
-        type: string
-      start_step:
-        description: 起始步骤
-        example: submit
-        type: string
-      step_configs:
-        description: 步骤配置列表
-        items:
-          $ref: '#/definitions/models.StepConfigResponse'
-        type: array
-      uid:
-        description: 模板唯一标识
-        example: template-123
-        type: string
-      updated_at:
-        description: 更新时间
-        example: "2025-01-27T14:30:00Z"
-        type: string
-      version:
-        description: 版本号
-        example: "1.0"
-        type: string
-    type: object
   models.UpdateTicketRequest:
     properties:
       id:
@@ -319,42 +274,40 @@ definitions:
       id:
         type: integer
     type: object
-  models.UpdateTicketTemplateRequest:
+  models.User:
     properties:
-      config:
-        items:
-          $ref: '#/definitions/models.StepConfig'
-        minItems: 1
-        type: array
-      creator:
-        maxLength: 50
-        minLength: 1
+      avatar:
+        example: https://example.com/avatar.jpg
         type: string
-      end_step:
-        items:
-          type: string
-        minItems: 1
-        type: array
+      created_at:
+        example: "2024-01-01T00:00:00Z"
+        type: string
+      deleted_at:
+        type: string
+      email:
+        example: admin@example.com
+        type: string
       id:
+        example: 1
         type: integer
-      memo:
-        maxLength: 1000
+      last_login_at:
+        example: "2024-01-01T00:00:00Z"
         type: string
-      name:
-        maxLength: 100
-        minLength: 1
+      nickname:
+        example: 管理员
         type: string
-      start_step:
-        maxLength: 100
-        minLength: 1
-        type: string
-    required:
-    - id
-    type: object
-  models.UpdateTicketTemplateResponse:
-    properties:
-      id:
+      role_id:
+        example: 1
         type: integer
+      status:
+        example: 1
+        type: integer
+      updated_at:
+        example: "2024-01-01T00:00:00Z"
+        type: string
+      username:
+        example: admin
+        type: string
     type: object
 host: localhost:8080
 info:
@@ -362,7 +315,7 @@ info:
     email: support@swagger.io
     name: API Support
     url: http://www.swagger.io/support
-  description: 这是一个完整的工单管理系统API，支持工单创建、审批、模板管理等功能。
+  description: 这是一个完整的工单管理系统API，支持用户认证、工单创建、审批、模板管理等功能。
   license:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
@@ -370,191 +323,133 @@ info:
   title: Open Ticket System API
   version: "1.0"
 paths:
-  /ticket-templates:
-    get:
-      consumes:
-      - application/json
-      description: 分页查询工单模板列表，支持筛选和排序
-      parameters:
-      - default: 1
-        description: 页码
-        in: query
-        name: page
-        type: integer
-      - default: 10
-        description: 每页数量
-        in: query
-        name: size
-        type: integer
-      - description: 模板名称
-        in: query
-        name: name
-        type: string
-      - description: 创建者
-        in: query
-        name: creator
-        type: string
-      - description: 版本号
-        in: query
-        name: version
-        type: string
-      - description: 是否内置
-        in: query
-        name: builtin
-        type: boolean
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/models.ListTicketTemplateResponse'
-        "400":
-          description: 请求参数错误
-          schema:
-            additionalProperties: true
-            type: object
-        "500":
-          description: 服务器内部错误
-          schema:
-            additionalProperties: true
-            type: object
-      summary: 查询工单模板列表
-      tags:
-      - ticket-templates
+  /api/v1/auth/login:
     post:
       consumes:
       - application/json
-      description: 创建新的工单模板
+      description: 用户登录获取JWT token
       parameters:
-      - description: 创建模板请求
+      - description: 登录请求
         in: body
         name: request
         required: true
         schema:
-          $ref: '#/definitions/models.CreateTicketTemplateRequest'
+          $ref: '#/definitions/models.LoginRequest'
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: 登录成功
           schema:
-            $ref: '#/definitions/models.CreateTicketTemplateResponse'
+            $ref: '#/definitions/models.LoginResponse'
         "400":
           description: 请求参数错误
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: 用户名或密码错误
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            additionalProperties: true
-            type: object
-      summary: 创建工单模板
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: 用户登录
       tags:
-      - ticket-templates
-  /ticket-templates/{id}:
-    delete:
-      consumes:
-      - application/json
-      description: 根据ID删除工单模板
-      parameters:
-      - description: 模板ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/models.DeleteTicketTemplateResponse'
-        "400":
-          description: 请求参数错误
-          schema:
-            additionalProperties: true
-            type: object
-        "500":
-          description: 服务器内部错误
-          schema:
-            additionalProperties: true
-            type: object
-      summary: 删除工单模板
-      tags:
-      - ticket-templates
+      - 认证
+  /api/v1/auth/profile:
     get:
       consumes:
       - application/json
-      description: 根据ID获取工单模板详细信息
-      parameters:
-      - description: 模板ID
-        in: path
-        name: id
-        required: true
-        type: integer
+      description: 获取当前登录用户的详细信息
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: 用户信息
           schema:
-            $ref: '#/definitions/models.TicketTemplateResponse'
-        "400":
-          description: 请求参数错误
+            $ref: '#/definitions/models.User'
+        "401":
+          description: 未授权
           schema:
-            additionalProperties: true
-            type: object
-        "404":
-          description: 模板不存在
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: 服务器内部错误
           schema:
-            additionalProperties: true
-            type: object
-      summary: 获取工单模板详情
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: 获取用户信息
       tags:
-      - ticket-templates
-    put:
+      - 认证
+  /api/v1/auth/refresh:
+    post:
       consumes:
       - application/json
-      description: 更新工单模板信息
+      description: 使用refresh token获取新的access token
       parameters:
-      - description: 模板ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      - description: 更新模板请求
+      - description: 刷新token请求
         in: body
         name: request
         required: true
         schema:
-          $ref: '#/definitions/models.UpdateTicketTemplateRequest'
+          $ref: '#/definitions/models.RefreshTokenRequest'
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: 刷新成功
           schema:
-            $ref: '#/definitions/models.UpdateTicketTemplateResponse'
+            $ref: '#/definitions/models.RefreshTokenResponse'
         "400":
           description: 请求参数错误
           schema:
-            additionalProperties: true
-            type: object
-        "404":
-          description: 模板不存在
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: 无效的刷新令牌
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/models.ErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            additionalProperties: true
-            type: object
-      summary: 更新工单模板
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: 刷新JWT token
       tags:
-      - ticket-templates
+      - 认证
+  /api/v1/auth/register:
+    post:
+      consumes:
+      - application/json
+      description: 用户注册新账户
+      parameters:
+      - description: 注册请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: 注册成功
+          schema:
+            $ref: '#/definitions/models.RegisterResponse'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "409":
+          description: 用户名或邮箱已存在
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: 用户注册
+      tags:
+      - 认证
   /tickets:
     get:
       consumes:
@@ -817,7 +712,7 @@ paths:
       - tickets
 securityDefinitions:
   ApiKeyAuth:
-    description: 请输入JWT token，格式：Bearer {token}
+    description: 请输入JWT access token，格式：Bearer {access_token}
     in: header
     name: Authorization
     type: apiKey

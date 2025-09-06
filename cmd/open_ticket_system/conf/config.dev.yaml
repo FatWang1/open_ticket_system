@@ -5,11 +5,11 @@ server:
 
 database:
   driver: mysql
-  host: localhost
-  port: 3306
+  host: 192.168.10.250
+  port: 31507
   username: root
-  password: password
-  database: open_ticket_system
+  password: 123456
+  database: test
   charset: utf8mb4
   max_retries: 3
   retry_delay: 5
@@ -25,13 +25,21 @@ redis:
 
 log:
   level: debug
-  format: json
-  output: stdout
-  max_size: 100
-  max_backups: 3
-  max_age: 28
-  compress: true
+  logfile:
+    filename: "cmd/open_ticket_system/log/open_ticket_system.log"
+    maxsize: 50     # MB
+    maxage: 30      # days
+    maxbackups: 5
+    localtime: true
+
+accessLog:
+  filename: cmd/open_ticket_system/log/access.log
+  maxsize: 50     # MB
+  maxage: 30      # days
+  maxbackups: 5
+  localtime: true
 
 jwt:
   secret: "your-secret-key-here-change-in-production"
-  expire_time: 24
+  access_token_expire: 1    # access token过期时间(小时)
+  refresh_token_expire: 168 # refresh token过期时间(小时，7天)

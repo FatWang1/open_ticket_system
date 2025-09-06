@@ -232,13 +232,12 @@ func (c *TicketController) CloseTicket(ctx *gin.Context) {
 		return
 	}
 
-	response, err := c.ticketService.CloseTicket(ctx, &req)
-	if err != nil {
+	if err := c.ticketService.CloseTicket(ctx, &req); err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	ctx.JSON(http.StatusOK, response)
+	ctx.JSON(http.StatusOK, gin.H{"message": "ticket closed successfully"})
 }
 
 // ListTickets 查询工单列表

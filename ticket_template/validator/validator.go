@@ -31,13 +31,13 @@ func (cv *CustomValidator) ValidateVar(field interface{}, tag string) error {
 // 具体的请求验证函数
 
 // ValidateCreateTicketTemplateRequest 验证创建工单模板请求
-func ValidateCreateTicketTemplateRequest(req *models.CreateTicketTemplateRequest) error {
+func ValidateCreateTicketTemplateRequest(req *models.CreateTicketTemplateAPI) error {
 	v := NewCustomValidator()
 	return v.Validate(req)
 }
 
 // ValidateUpdateTicketTemplateRequest 验证更新工单模板请求
-func ValidateUpdateTicketTemplateRequest(req *models.UpdateTicketTemplateRequest) error {
+func ValidateUpdateTicketTemplateRequest(req *models.UpdateTicketTemplateAPI) error {
 	v := NewCustomValidator()
 	return v.Validate(req)
 }
@@ -45,7 +45,7 @@ func ValidateUpdateTicketTemplateRequest(req *models.UpdateTicketTemplateRequest
 // ValidateListTicketTemplateRequest 验证查询工单模板列表请求
 func ValidateListTicketTemplateRequest(req *models.ListTicketTemplateRequest) error {
 	v := NewCustomValidator()
-	
+
 	// 设置默认值
 	if req.Page <= 0 {
 		req.Page = 1
@@ -53,6 +53,6 @@ func ValidateListTicketTemplateRequest(req *models.ListTicketTemplateRequest) er
 	if req.Size <= 0 {
 		req.Size = 10
 	}
-	
+
 	return v.Validate(req)
 }

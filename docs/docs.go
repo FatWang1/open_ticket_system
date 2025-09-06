@@ -24,84 +24,9 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/ticket-templates": {
-            "get": {
-                "description": "分页查询工单模板列表，支持筛选和排序",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "ticket-templates"
-                ],
-                "summary": "查询工单模板列表",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "default": 1,
-                        "description": "页码",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "default": 10,
-                        "description": "每页数量",
-                        "name": "size",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "模板名称",
-                        "name": "name",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "创建者",
-                        "name": "creator",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "版本号",
-                        "name": "version",
-                        "in": "query"
-                    },
-                    {
-                        "type": "boolean",
-                        "description": "是否内置",
-                        "name": "builtin",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/models.ListTicketTemplateResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "请求参数错误",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    },
-                    "500": {
-                        "description": "服务器内部错误",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    }
-                }
-            },
+        "/api/v1/auth/login": {
             "post": {
-                "description": "创建新的工单模板",
+                "description": "用户登录获取JWT token",
                 "consumes": [
                     "application/json"
                 ],
@@ -109,47 +34,56 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "ticket-templates"
+                    "认证"
                 ],
-                "summary": "创建工单模板",
+                "summary": "用户登录",
                 "parameters": [
                     {
-                        "description": "创建模板请求",
+                        "description": "登录请求",
                         "name": "request",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.CreateTicketTemplateRequest"
+                            "$ref": "#/definitions/models.LoginRequest"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "登录成功",
                         "schema": {
-                            "$ref": "#/definitions/models.CreateTicketTemplateResponse"
+                            "$ref": "#/definitions/models.LoginResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "用户名或密码错误",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/models.ErrorResponse"
                         }
                     }
                 }
             }
         },
-        "/ticket-templates/{id}": {
+        "/api/v1/auth/profile": {
             "get": {
-                "description": "根据ID获取工单模板详细信息",
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "获取当前登录用户的详细信息",
                 "consumes": [
                     "application/json"
                 ],
@@ -157,43 +91,34 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "ticket-templates"
+                    "认证"
                 ],
-                "summary": "获取工单模板详情",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "模板ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
+                "summary": "获取用户信息",
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "用户信息",
                         "schema": {
-                            "$ref": "#/definitions/models.TicketTemplateResponse"
+                            "$ref": "#/definitions/models.User"
                         }
                     },
-                    "400": {
-                        "description": "请求参数错误",
+                    "401": {
+                        "description": "未授权",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/models.ErrorResponse"
                         }
                     },
-                    "404": {
-                        "description": "模板不存在",
+                    "500": {
+                        "description": "服务器内部错误",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/models.ErrorResponse"
                         }
                     }
                 }
-            },
-            "put": {
-                "description": "更新工单模板信息",
+            }
+        },
+        "/api/v1/auth/refresh": {
+            "post": {
+                "description": "使用refresh token获取新的access token",
                 "consumes": [
                     "application/json"
                 ],
@@ -201,59 +126,51 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "ticket-templates"
+                    "认证"
                 ],
-                "summary": "更新工单模板",
+                "summary": "刷新JWT token",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "description": "模板ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "更新模板请求",
+                        "description": "刷新token请求",
                         "name": "request",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.UpdateTicketTemplateRequest"
+                            "$ref": "#/definitions/models.RefreshTokenRequest"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "刷新成功",
                         "schema": {
-                            "$ref": "#/definitions/models.UpdateTicketTemplateResponse"
+                            "$ref": "#/definitions/models.RefreshTokenResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/models.ErrorResponse"
                         }
                     },
-                    "404": {
-                        "description": "模板不存在",
+                    "401": {
+                        "description": "无效的刷新令牌",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/models.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/models.ErrorResponse"
                         }
                     }
                 }
-            },
-            "delete": {
-                "description": "根据ID删除工单模板",
+            }
+        },
+        "/api/v1/auth/register": {
+            "post": {
+                "description": "用户注册新账户",
                 "consumes": [
                     "application/json"
                 ],
@@ -261,37 +178,43 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "ticket-templates"
+                    "认证"
                 ],
-                "summary": "删除工单模板",
+                "summary": "用户注册",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "description": "模板ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
+                        "description": "注册请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.RegisterRequest"
+                        }
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "OK",
+                    "201": {
+                        "description": "注册成功",
                         "schema": {
-                            "$ref": "#/definitions/models.DeleteTicketTemplateResponse"
+                            "$ref": "#/definitions/models.RegisterResponse"
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "用户名或邮箱已存在",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/models.ErrorResponse"
                         }
                     }
                 }
@@ -805,17 +728,6 @@ const docTemplate = `{
                 }
             }
         },
-        "models.CreateTicketTemplateRequest": {
-            "type": "object"
-        },
-        "models.CreateTicketTemplateResponse": {
-            "type": "object",
-            "properties": {
-                "id": {
-                    "type": "integer"
-                }
-            }
-        },
         "models.DeleteTicketResponse": {
             "type": "object",
             "properties": {
@@ -824,11 +736,16 @@ const docTemplate = `{
                 }
             }
         },
-        "models.DeleteTicketTemplateResponse": {
+        "models.ErrorResponse": {
             "type": "object",
             "properties": {
-                "id": {
-                    "type": "integer"
+                "details": {
+                    "type": "string",
+                    "example": "详细错误信息"
+                },
+                "error": {
+                    "type": "string",
+                    "example": "错误信息"
                 }
             }
         },
@@ -850,94 +767,120 @@ const docTemplate = `{
                 }
             }
         },
-        "models.ListTicketTemplateResponse": {
-            "description": "查询工单模板列表响应结构",
+        "models.LoginRequest": {
             "type": "object",
+            "required": [
+                "password",
+                "username"
+            ],
             "properties": {
-                "list": {
-                    "description": "模板列表",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.TicketTemplateResponse"
-                    }
+                "password": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 6,
+                    "example": "123456"
                 },
-                "total": {
-                    "description": "总记录数",
-                    "type": "integer",
-                    "example": 50
+                "username": {
+                    "type": "string",
+                    "maxLength": 50,
+                    "minLength": 3,
+                    "example": "admin"
                 }
             }
         },
-        "models.NextStepResponse": {
-            "description": "下一步骤响应结构",
+        "models.LoginResponse": {
             "type": "object",
             "properties": {
-                "id": {
-                    "description": "步骤ID",
+                "access_token": {
+                    "type": "string",
+                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                },
+                "expires_in": {
                     "type": "integer",
-                    "example": 1
+                    "example": 86400
                 },
-                "operation": {
-                    "description": "操作类型",
+                "refresh_token": {
                     "type": "string",
-                    "example": "approve"
+                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
                 },
-                "to_step": {
-                    "description": "目标步骤",
+                "token_type": {
                     "type": "string",
-                    "example": "review"
+                    "example": "Bearer"
+                },
+                "user": {
+                    "$ref": "#/definitions/models.User"
                 }
             }
         },
-        "models.StepConfig": {
-            "type": "object"
+        "models.RefreshTokenRequest": {
+            "type": "object",
+            "required": [
+                "refresh_token"
+            ],
+            "properties": {
+                "refresh_token": {
+                    "type": "string",
+                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                }
+            }
         },
-        "models.StepConfigResponse": {
-            "description": "步骤配置响应结构",
+        "models.RefreshTokenResponse": {
             "type": "object",
             "properties": {
-                "id": {
-                    "description": "配置ID",
+                "access_token": {
+                    "type": "string",
+                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                },
+                "expires_in": {
                     "type": "integer",
-                    "example": 1
+                    "example": 86400
                 },
-                "joint_sign_rate": {
-                    "description": "联合签名比例",
-                    "type": "number",
-                    "example": 0.5
-                },
-                "next_steps": {
-                    "description": "下一步骤列表",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.NextStepResponse"
-                    }
-                },
-                "operators": {
-                    "description": "操作人列表",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    },
-                    "example": [
-                        "张三",
-                        "李四"
-                    ]
-                },
-                "sign_type": {
-                    "description": "签名类型",
+                "refresh_token": {
                     "type": "string",
-                    "example": "serial_sign"
+                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
                 },
-                "state": {
-                    "description": "步骤状态",
+                "token_type": {
                     "type": "string",
-                    "example": "pending"
+                    "example": "Bearer"
+                }
+            }
+        },
+        "models.RegisterRequest": {
+            "type": "object",
+            "required": [
+                "email",
+                "password",
+                "username"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "example": "user@example.com"
                 },
-                "step": {
-                    "description": "步骤名",
+                "nickname": {
                     "type": "string",
-                    "example": "submit"
+                    "maxLength": 50,
+                    "example": "新用户"
+                },
+                "password": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 6,
+                    "example": "123456"
+                },
+                "username": {
+                    "type": "string",
+                    "maxLength": 50,
+                    "minLength": 3,
+                    "example": "newuser"
+                }
+            }
+        },
+        "models.RegisterResponse": {
+            "type": "object",
+            "properties": {
+                "user": {
+                    "$ref": "#/definitions/models.User"
                 }
             }
         },
@@ -1013,80 +956,6 @@ const docTemplate = `{
                 }
             }
         },
-        "models.TicketTemplateResponse": {
-            "description": "工单模板响应结构",
-            "type": "object",
-            "properties": {
-                "builtin": {
-                    "description": "是否内置",
-                    "type": "boolean",
-                    "example": false
-                },
-                "created_at": {
-                    "description": "创建时间",
-                    "type": "string",
-                    "example": "2025-01-27T14:30:00Z"
-                },
-                "creator": {
-                    "description": "创建者",
-                    "type": "string",
-                    "example": "管理员"
-                },
-                "end_steps": {
-                    "description": "结束步骤列表",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    },
-                    "example": [
-                        "approve",
-                        "reject"
-                    ]
-                },
-                "id": {
-                    "description": "模板ID",
-                    "type": "integer",
-                    "example": 1
-                },
-                "memo": {
-                    "description": "模板备注",
-                    "type": "string",
-                    "example": "请假申请流程"
-                },
-                "name": {
-                    "description": "模板名称",
-                    "type": "string",
-                    "example": "请假申请模板"
-                },
-                "start_step": {
-                    "description": "起始步骤",
-                    "type": "string",
-                    "example": "submit"
-                },
-                "step_configs": {
-                    "description": "步骤配置列表",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.StepConfigResponse"
-                    }
-                },
-                "uid": {
-                    "description": "模板唯一标识",
-                    "type": "string",
-                    "example": "template-123"
-                },
-                "updated_at": {
-                    "description": "更新时间",
-                    "type": "string",
-                    "example": "2025-01-27T14:30:00Z"
-                },
-                "version": {
-                    "description": "版本号",
-                    "type": "string",
-                    "example": "1.0"
-                }
-            }
-        },
         "models.UpdateTicketRequest": {
             "type": "object",
             "required": [
@@ -1110,62 +979,58 @@ const docTemplate = `{
                 }
             }
         },
-        "models.UpdateTicketTemplateRequest": {
-            "type": "object",
-            "required": [
-                "id"
-            ],
-            "properties": {
-                "config": {
-                    "type": "array",
-                    "minItems": 1,
-                    "items": {
-                        "$ref": "#/definitions/models.StepConfig"
-                    }
-                },
-                "creator": {
-                    "type": "string",
-                    "maxLength": 50,
-                    "minLength": 1
-                },
-                "end_step": {
-                    "type": "array",
-                    "minItems": 1,
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "memo": {
-                    "type": "string",
-                    "maxLength": 1000
-                },
-                "name": {
-                    "type": "string",
-                    "maxLength": 100,
-                    "minLength": 1
-                },
-                "start_step": {
-                    "type": "string",
-                    "maxLength": 100,
-                    "minLength": 1
-                }
-            }
-        },
-        "models.UpdateTicketTemplateResponse": {
+        "models.User": {
             "type": "object",
             "properties": {
+                "avatar": {
+                    "type": "string",
+                    "example": "https://example.com/avatar.jpg"
+                },
+                "created_at": {
+                    "type": "string",
+                    "example": "2024-01-01T00:00:00Z"
+                },
+                "deleted_at": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string",
+                    "example": "admin@example.com"
+                },
                 "id": {
-                    "type": "integer"
+                    "type": "integer",
+                    "example": 1
+                },
+                "last_login_at": {
+                    "type": "string",
+                    "example": "2024-01-01T00:00:00Z"
+                },
+                "nickname": {
+                    "type": "string",
+                    "example": "管理员"
+                },
+                "role_id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "status": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "updated_at": {
+                    "type": "string",
+                    "example": "2024-01-01T00:00:00Z"
+                },
+                "username": {
+                    "type": "string",
+                    "example": "admin"
                 }
             }
         }
     },
     "securityDefinitions": {
         "ApiKeyAuth": {
-            "description": "请输入JWT token，格式：Bearer {token}",
+            "description": "请输入JWT access token，格式：Bearer {access_token}",
             "type": "apiKey",
             "name": "Authorization",
             "in": "header"
@@ -1180,7 +1045,7 @@ var SwaggerInfo = &swag.Spec{
 	BasePath:         "/api/v1",
 	Schemes:          []string{},
 	Title:            "Open Ticket System API",
-	Description:      "这是一个完整的工单管理系统API，支持工单创建、审批、模板管理等功能。",
+	Description:      "这是一个完整的工单管理系统API，支持用户认证、工单创建、审批、模板管理等功能。",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

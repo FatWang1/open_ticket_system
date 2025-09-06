@@ -55,14 +55,6 @@ type NextStepResponse struct {
 	Operation string `json:"operation" example:"approve"` // 操作类型
 }
 
-// ErrorResponse 错误响应模型（用于Swagger）
-// @Description 错误响应结构
-type ErrorResponse struct {
-	Error   string `json:"error" example:"请求参数错误"`   // 错误信息
-	Code    int    `json:"code" example:"400"`       // 错误代码
-	Message string `json:"message" example:"参数验证失败"` // 错误描述
-}
-
 // SuccessResponse 成功响应模型（用于Swagger）
 // @Description 成功响应结构
 type SuccessResponse struct {
